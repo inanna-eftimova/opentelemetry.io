@@ -55,6 +55,18 @@ node --require @opentelemetry/auto-instrumentations-node/register app.js
 Replace `my-service` with the name of your service, and `app.js` with the file
 that starts your application.
 
+Your application prints the same messages with or without the instrumentation.
+To check that the instrumentation works, see
+[Verify that it works](#verify-that-it-works).
+
+> [!NOTE] `MetadataLookupWarning`
+>
+> You might see the warning `MetadataLookupWarning: received unexpected error`.
+> It comes from the resource detector that checks if your application runs on
+> Google Cloud. If your application doesn't run on Google Cloud, you can ignore
+> this warning. You can also turn off this detector with
+> [`OTEL_NODE_RESOURCE_DETECTORS`](configuration/#sdk-resource-detector-configuration).
+
 The command uses the following environment variables:
 
 - `OTEL_SERVICE_NAME`: The name of your service. Your observability backend
@@ -65,14 +77,6 @@ The command uses the following environment variables:
   `http://localhost:4318`. The value must start with `http://` or `https://`.
 
 By default, the instrumentation sends traces, metrics, and logs.
-
-> [!NOTE] Signal-specific endpoints
->
-> To send only traces to a different address, you can set
-> `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`. This variable uses the URL exactly as
-> you write it, so include the full path, for example
-> `http://localhost:4318/v1/traces`. With `OTEL_EXPORTER_OTLP_ENDPOINT`, the
-> instrumentation adds the path for you.
 
 If you start your application with a script, such as the `start` script in your
 `package.json` file, set the `--require` option in `NODE_OPTIONS` instead:
@@ -91,16 +95,11 @@ npm start
 > instrumentation. In a project without the instrumentation package, this causes
 > a `Cannot find module` error.
 
-By default, all SDK [resource detectors](/docs/languages/js/resources/) are
-used. You can use the environment variable `OTEL_NODE_RESOURCE_DETECTORS` to
-enable only certain detectors, or to completely disable them.
-
 To see the full range of configuration options, see
 [Module Configuration](configuration).
 
 ## Verify that it works
 
-Your application prints the same messages with or without the instrumentation.
 To see if the instrumentation works, check for traces with one of the following
 methods.
 
@@ -108,7 +107,8 @@ methods.
 
 This check doesn't need a Collector.
 
-1. Start your application with the console exporter:
+1. If your application is still running, stop it first: press <kbd>Ctrl+C</kbd>
+   in its terminal. Then start it with the console exporter:
 
    ```shell
    OTEL_SERVICE_NAME="my-service" \
@@ -118,7 +118,7 @@ This check doesn't need a Collector.
    node --require @opentelemetry/auto-instrumentations-node/register app.js
    ```
 
-   The values `none` turn off metrics and logs for this check. Nothing receives
+   The value `none` turns off metrics and logs for this check. Nothing receives
    them, and the output stays shorter.
 
 2. Send a request to your application. For example, open one of its pages in
@@ -134,14 +134,6 @@ You know that the instrumentation works when you see a span with these values:
 
 One request can create several spans, for example one from the HTTP server and
 one from Express.
-
-> [!NOTE] `MetadataLookupWarning`
->
-> You might see the warning `MetadataLookupWarning: received unexpected error`.
-> It comes from the resource detector that checks if your application runs on
-> Google Cloud. If your application doesn't run on Google Cloud, you can ignore
-> this warning. You can also turn off this detector with
-> `OTEL_NODE_RESOURCE_DETECTORS`.
 
 <details>
 <summary>Example output (shortened)</summary>
@@ -180,7 +172,7 @@ one from Express.
    start uses Docker. The default configuration prints the telemetry that the
    Collector receives.
 
-2. Start your application with the command from
+2. Stop your application if it's running. Then start it with the command from
    [Configure and run your application](#configure-and-run-your-application).
 
 3. Send a request to your application.
@@ -261,7 +253,9 @@ If you don't see any traces, check the following:
   instrumentation uses the default value `http://localhost:4318` without an
   error.
 - **Does a signal-specific endpoint include the path?** If you set
-  `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, the value must end with `/v1/traces`.
+  `OTEL_EXPORTER_OTLP_TRACES_ENDPOINT`, the instrumentation uses the URL exactly
+  as you write it. Include the full path, for example
+  `http://localhost:4318/v1/traces`.
 - **Does something receive data at the endpoint?** Set `OTEL_LOG_LEVEL` to
   `debug` and search the output for `ECONNREFUSED`. This error means that
   nothing accepts connections at that address and port.
